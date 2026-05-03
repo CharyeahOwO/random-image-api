@@ -204,6 +204,19 @@ function uploadNameStem(mode, customName, originalName) {
   return '';
 }
 
+function imageSectionRedirect(req) {
+  const fallback = `${config.adminPath}#images`;
+  const referer = req.get('referer');
+  if (!referer) return fallback;
+  try {
+    const url = new URL(referer, config.publicBaseUrl);
+    if (url.pathname !== config.adminPath) return fallback;
+    return `${url.pathname}${url.search}#images`;
+  } catch {
+    return fallback;
+  }
+}
+
 function apiExamples(adminPath) {
   const examples = [
     '/image/api/random',
@@ -365,7 +378,7 @@ export function createAdminRouter(store) {
     } catch (error) {
       req.session.flash = { type: 'error', text: error.message };
     }
-    res.redirect(config.adminPath);
+    res.redirect(imageSectionRedirect(req));
   });
 
   router.post('/images/batch', requireAdmin, async (req, res) => {
@@ -402,7 +415,7 @@ export function createAdminRouter(store) {
     } catch (error) {
       req.session.flash = { type: 'error', text: error.message };
     }
-    res.redirect(config.adminPath);
+    res.redirect(imageSectionRedirect(req));
   });
 
   return router;

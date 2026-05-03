@@ -21,6 +21,8 @@ const imageSearchKey = 'nyaovo:imageSearch';
 const imageSortKey = 'nyaovo:imageSort';
 let queuedFiles = [];
 let visibleImageLimit = imagePageSize;
+let filterLoading = false;
+let currentPathSearch = `${window.location.pathname}${window.location.search}`;
 const previewUrls = new Map();
 
 function formatSize(bytes) {
@@ -84,6 +86,17 @@ function setSubmitLoading(button, text) {
   button.disabled = true;
   button.dataset.originalText = button.textContent;
   button.textContent = text;
+}
+
+function preserveSubmitterValue(form, submitter) {
+  if (!form || !submitter?.name) return;
+  form.querySelectorAll(`input[data-submit-preserve="${submitter.name}"]`).forEach((input) => input.remove());
+  const input = document.createElement('input');
+  input.type = 'hidden';
+  input.name = submitter.name;
+  input.value = submitter.value;
+  input.dataset.submitPreserve = submitter.name;
+  form.appendChild(input);
 }
 
 function addFiles(files) {
@@ -172,16 +185,60 @@ function syncNameModeState() {
   }
 }
 
+function adminHref(href) {
+  try {
+    const url = new URL(href, window.location.origin);
+    return `${url.pathname}${url.search}`;
+  } catch {
+    return href;
+  }
+}
+
 function rememberFilters() {
   const adminPath = window.location.pathname;
-  document.querySelectorAll('.filter-row a').forEach((link) => {
-    link.addEventListener('click', () => localStorage.setItem('nyaovo:lastFilter', link.getAttribute('href')));
-  });
   if (!window.location.search) {
     const saved = localStorage.getItem('nyaovo:lastFilter');
-    if (saved && saved.startsWith(adminPath) && saved !== window.location.pathname) {
-      window.location.replace(saved);
+    if (saved && saved.startsWith(adminPath) && adminHref(saved) !== window.location.pathname) {
+      window.location.replace(adminHref(saved));
     }
+  }
+}
+
+async function loadFilterUrl(href, { push = true } = {}) {
+  if (!imageGrid || filterLoading) return;
+  const target = adminHref(href);
+  const currentScroll = { x: window.scrollX, y: window.scrollY };
+  filterLoading = true;
+  if (loadMoreStatus) loadMoreStatus.textContent = '正在更新筛选...';
+
+  try {
+    const response = await fetch(target, {
+      headers: { 'X-Requested-With': 'fetch' }
+    });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+    const html = await response.text();
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    const nextFilters = doc.querySelector('.filters');
+    const nextGrid = doc.querySelector('.image-grid');
+    const filters = document.querySelector('.filters');
+    if (!nextFilters || !nextGrid || !filters) throw new Error('页面结构不完整');
+
+    filters.innerHTML = nextFilters.innerHTML;
+    imageGrid.innerHTML = nextGrid.innerHTML;
+    visibleImageLimit = imagePageSize;
+    applyImageFilters();
+
+    if (push) {
+      window.history.pushState({ filterUrl: target }, '', target);
+    }
+    currentPathSearch = target;
+    localStorage.setItem('nyaovo:lastFilter', target);
+    window.scrollTo(currentScroll.x, currentScroll.y);
+  } catch {
+    window.location.assign(target);
+  } finally {
+    filterLoading = false;
   }
 }
 
@@ -339,6 +396,15 @@ document.addEventListener('change', (event) => {
 });
 
 document.addEventListener('click', (event) => {
+  const link = event.target.closest('.filter-row a');
+  if (!link || event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+  const target = adminHref(link.getAttribute('href'));
+  if (!target.startsWith(window.location.pathname)) return;
+  event.preventDefault();
+  loadFilterUrl(target);
+});
+
+document.addEventListener('click', (event) => {
   const card = event.target.closest('.image-card');
   if (!card || event.target.closest('button, a, input, select, label, .card-actions')) return;
   const checkbox = card.querySelector('.image-checkbox');
@@ -373,7 +439,8 @@ if (batchForm) {
       return;
     }
 
-    const action = event.submitter?.value;
+    const submitter = event.submitter || batchForm.querySelector('button[type="submit"]');
+    const action = submitter?.value;
     if (action === 'delete' && !window.confirm(`确定删除选中的 ${checked.length} 张图片吗？`)) {
       event.preventDefault();
       return;
@@ -386,8 +453,9 @@ if (batchForm) {
       input.value = checkbox.value;
       batchForm.appendChild(input);
     });
+    preserveSubmitterValue(batchForm, submitter);
     batchForm.dataset.submitting = 'true';
-    setSubmitLoading(event.submitter || batchForm.querySelector('button[type="submit"]'), '处理中...');
+    setSubmitLoading(submitter, '处理中...');
   });
 }
 
@@ -419,16 +487,27 @@ if (loadMoreImages) {
 }
 
 if (resetImageFilters) {
-  resetImageFilters.addEventListener('click', () => {
+  resetImageFilters.addEventListener('click', (event) => {
     localStorage.removeItem('nyaovo:lastFilter');
     localStorage.removeItem(imageSearchKey);
     localStorage.removeItem(imageSortKey);
     if (imageSearch) imageSearch.value = '';
     if (imageSort) imageSort.value = 'newest';
+    const target = adminHref(resetImageFilters.getAttribute('href'));
+    if (!target.startsWith(window.location.pathname)) return;
+    event.preventDefault();
+    loadFilterUrl(target);
   });
 }
 
 applyImageFilters();
+
+window.addEventListener('popstate', () => {
+  const nextPathSearch = `${window.location.pathname}${window.location.search}`;
+  if (nextPathSearch === currentPathSearch) return;
+  currentPathSearch = nextPathSearch;
+  loadFilterUrl(nextPathSearch, { push: false });
+});
 
 window.addEventListener('beforeunload', () => {
   queuedFiles.forEach(revokePreviewUrl);
