@@ -378,6 +378,50 @@ tr:last-child td {
   border-bottom: 0;
 }
 
+td .api-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 320px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: middle;
+  margin: 0;
+  padding: 4px 8px;
+  font-size: 0.82rem;
+  border-radius: 5px;
+}
+
+td .api-link span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+td .copy-btn {
+  flex-shrink: 0;
+  min-height: 26px;
+  padding: 0 8px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--primary);
+  background: var(--primary-soft);
+  border: 1px solid transparent;
+}
+
+td .copy-btn:hover {
+  background: var(--primary);
+  color: #fff;
+}
+
+td .copy-btn.copied {
+  color: var(--success);
+  background: var(--teal-soft);
+  pointer-events: none;
+}
+
 code {
   display: block;
   width: 100%;

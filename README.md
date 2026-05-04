@@ -66,6 +66,9 @@ services:
 docker compose up -d
 ```
 
+> 容器启动时会自动修复 `./images` 目录权限，无需手动 chown。
+> 如果是从旧版本升级，首次启动可能需要几秒完成权限修复。
+
 访问 `http://localhost:3400/image`，后台 `http://localhost:3400/image/admin`。
 
 </details>

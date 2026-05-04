@@ -18,17 +18,22 @@ function parseLimit(value) {
 
 function galleryRows(galleries) {
   if (galleries.length === 0) {
-    return '<tr><td colspan="4">暂无图库，请在后台创建图库或手动放入图片目录。</td></tr>';
+    return '<tr><td colspan="5">暂无图库，请在后台创建图库或手动放入图片目录。</td></tr>';
   }
   return galleries
     .map(
       (gallery) => {
         const displayName = gallery.label || gallery.name;
+        const nameCell = gallery.label
+          ? `${escapeHtml(displayName)}<br><span class="muted">${escapeHtml(gallery.name)}</span>`
+          : escapeHtml(displayName);
+        const apiUrl = `/image/api/random?gallery=${encodeURIComponent(gallery.name)}`;
         return `<tr>
-          <td>${escapeHtml(displayName)}</td>
+          <td>${nameCell}</td>
           <td>${gallery.total}</td>
           <td>${gallery.pc}</td>
           <td>${gallery.mobile}</td>
+          <td><code class="api-link"><span>${escapeHtml(apiUrl)}</span> <button type="button" class="copy-btn" data-copy="${escapeHtml(apiUrl)}" title="复制">复制</button></code></td>
         </tr>`;
       }
     )

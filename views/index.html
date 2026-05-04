@@ -58,6 +58,7 @@
                   <th>总数</th>
                   <th>PC</th>
                   <th>Mobile</th>
+                  <th>API</th>
                 </tr>
               </thead>
               <tbody>{{galleryRows}}</tbody>
@@ -78,5 +79,17 @@
         </article>
       </section>
     </main>
+    <script>
+      document.addEventListener('click', async (e) => {
+        const btn = e.target.closest('.copy-btn');
+        if (!btn) return;
+        try {
+          await navigator.clipboard.writeText(btn.dataset.copy);
+          btn.textContent = '已复制';
+          btn.classList.add('copied');
+          setTimeout(() => { btn.textContent = '复制'; btn.classList.remove('copied'); }, 1500);
+        } catch { btn.textContent = '失败'; }
+      });
+    </script>
   </body>
 </html>
