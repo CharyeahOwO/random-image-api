@@ -2,6 +2,11 @@
 
 [中文](./README.md) | [English](./README_en.md)
 
+![Node](https://img.shields.io/badge/Node.js-43853D.svg?logo=node.js&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-ready-2496ED?logo=docker&logoColor=white)
+![License](https://img.shields.io/badge/License-MIT-yellow)
+![Tests](https://img.shields.io/badge/Tests-passing-brightgreen)
+
 一个自托管的随机图片 API，带管理后台。基于 Node.js + Express，无需数据库，图片存在本地文件系统。适合个人图床、壁纸站等场景。
 
 ## 功能
@@ -179,18 +184,24 @@ npm start               # 或 npm run dev 热更新
 
 ### `GET /image/api/random`
 
-随机返回一张图片。
+随机返回一张图片。支持参数组合，灵活适配不同场景。
 
-参数：
-- `gallery` — 图库名
-- `device` — `pc` / `mobile` / `all`
-- `type` — `image`（默认）/ `json` / `redirect`
+| 参数 | 可选值 | 默认值 | 说明 |
+|------|--------|--------|------|
+| `gallery` | 图库名 | 全部 | 指定图库 |
+| `device` | `pc` / `mobile` / `all` | `all` | 设备类型 |
+| `type` | `image` / `json` / `redirect` | `image` | 返回格式 |
 
-```
-/image/api/random?gallery=anime&device=pc&type=json
-```
+**返回格式说明：**
 
-JSON 响应：
+| type | 返回内容 | Content-Type |
+|------|----------|-------------|
+| `image` | 图片二进制流 | `image/*` |
+| `json` | 图片元数据 JSON | `application/json` |
+| `redirect` | 302 跳转到图片 URL | - |
+
+**JSON 响应示例：**
+
 ```json
 {
   "url": "https://example.com/image/images/anime/pc/001.webp",
@@ -205,17 +216,23 @@ JSON 响应：
 }
 ```
 
-### 其他接口
+### API 调用示例
 
-| 接口 | 说明 |
-|------|------|
-| `GET /image/api/:gallery` | 指定图库快捷接口 |
-| `GET /image/api/galleries` | 图库统计 |
-| `GET /image/api/list` | 分页图片列表 |
-| `GET /image/api/stats` | 全局统计 |
-| `GET /image/health` | 健康检查 |
+| 接口 | 适用场景 |
+|------|----------|
+| `GET /image/api/random` | 随机返回任意图库的图片，适合全站随机背景 |
+| `GET /image/api/random?gallery=anime` | 指定图库随机出图，适合分类壁纸轮播 |
+| `GET /image/api/random?gallery=anime&device=pc` | 指定图库 + 横屏，适合桌面端背景 |
+| `GET /image/api/random?gallery=anime&device=mobile` | 指定图库 + 竖屏，适合手机端背景 |
+| `GET /image/api/random?type=json` | 获取图片元数据，适合前端自行渲染 |
+| `GET /image/api/random?type=redirect` | 302 跳转，适合 `<img src>` 直接引用 |
+| `GET /image/api/:gallery` | 图库快捷接口，等同于 `?gallery=xxx` |
+| `GET /image/api/galleries` | 获取所有图库统计，适合管理面板展示 |
+| `GET /image/api/list?limit=100` | 分页获取图片列表，适合后台管理 |
+| `GET /image/api/stats` | 全局统计信息，适合监控面板 |
+| `GET /image/health` | 健康检查，适合 Docker/K8s 探针 |
 
-## 图片管理
+### 图片管理
 
 - 支持格式：jpg, jpeg, png, webp, gif, avif
 - 上传时自动识别真实格式，扩展名错误也会纠正
