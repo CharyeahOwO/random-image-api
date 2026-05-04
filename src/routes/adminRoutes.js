@@ -340,15 +340,19 @@ export function createAdminRouter(store) {
 
       for (const file of req.files || []) {
         const originalName = decodeUploadName(file.originalname);
+        let tempFilePath = file.path;
         try {
-          const detected = await detectImageType(file.buffer, originalName);
+          const buffer = await fs.readFile(tempFilePath);
+          const detected = await detectImageType(buffer, originalName);
           const filename = createSafeFilename(detected.ext, uploadNameStem(nameMode, customName, originalName));
           const target = safeJoin(targetDir, filename);
-          await fs.writeFile(target, file.buffer, { flag: 'wx', mode: 0o644 });
+          await fs.writeFile(target, buffer, { flag: 'wx', mode: 0o644 });
           const note = detected.extensionCorrected ? `（已按真实格式保存为 .${detected.ext}）` : '';
           results.success.push(`${filename}${note}`);
         } catch (error) {
           results.failed.push(`${originalName}: ${error.message}`);
+        } finally {
+          await fs.unlink(tempFilePath).catch(() => {});
         }
       }
 

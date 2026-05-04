@@ -52,6 +52,13 @@ export class ImageStore {
     this.timer.unref?.();
   }
 
+  destroy() {
+    if (this.timer) {
+      clearInterval(this.timer);
+      this.timer = null;
+    }
+  }
+
   async getStats() {
     if (Date.now() - this.lastRefreshMs > config.cacheTtlSeconds * 1000) {
       await this.refresh();
@@ -75,7 +82,10 @@ export class ImageStore {
 
   async scan() {
     await ensureDir(config.imageRoot);
-    const entries = await fs.readdir(config.imageRoot, { withFileTypes: true }).catch(() => []);
+    const entries = await fs.readdir(config.imageRoot, { withFileTypes: true }).catch((error) => {
+      if (error.code !== 'ENOENT') console.error('readdir failed:', error);
+      return [];
+    });
     const galleries = [];
     const images = [];
 
@@ -88,14 +98,20 @@ export class ImageStore {
       for (const device of deviceNames) {
         const deviceDir = safeJoin(galleryDir, device);
         await ensureDir(deviceDir);
-        const files = await fs.readdir(deviceDir, { withFileTypes: true }).catch(() => []);
+        const files = await fs.readdir(deviceDir, { withFileTypes: true }).catch((error) => {
+          if (error.code !== 'ENOENT') console.error('readdir device failed:', error);
+          return [];
+        });
         for (const file of files) {
           if (!file.isFile()) continue;
           const ext = path.extname(file.name).replace('.', '').toLowerCase();
           if (!allowedImageExtensions.has(ext)) continue;
 
           const absolutePath = safeJoin(deviceDir, file.name);
-          const stat = await fs.stat(absolutePath).catch(() => null);
+          const stat = await fs.stat(absolutePath).catch((error) => {
+            if (error.code !== 'ENOENT') console.error('stat failed:', error);
+            return null;
+          });
           if (!stat) continue;
           const dimensions = await getImageDimensions(absolutePath);
 

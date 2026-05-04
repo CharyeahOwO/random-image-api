@@ -96,7 +96,24 @@ app.use((error, req, res, next) => {
   res.status(500).json({ error: 'Internal Server Error' });
 });
 
-app.listen(config.port, () => {
+const server = app.listen(config.port, () => {
   console.log(`Nyaovo Random Image API listening on http://0.0.0.0:${config.port}`);
   console.log(`Admin path: ${config.adminPath}`);
 });
+
+function gracefulShutdown(signal) {
+  console.log(`Received ${signal}, shutting down gracefully...`);
+  server.close(() => {
+    store.destroy();
+    console.log('Server closed');
+    process.exit(0);
+  });
+  // 强制退出兜底（10秒后）
+  setTimeout(() => {
+    console.error('Forced shutdown after timeout');
+    process.exit(1);
+  }, 10000);
+}
+
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
