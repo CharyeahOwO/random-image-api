@@ -64,7 +64,7 @@ describe('publicImageJson', () => {
 
   it('should format image correctly', () => {
     const image = {
-      url: 'http://localhost:3000/image/images/anime/pc/001.jpg',
+      path: '/image/images/anime/pc/001.jpg',
       gallery: 'anime',
       device: 'pc',
       filename: '001.jpg',
@@ -73,8 +73,8 @@ describe('publicImageJson', () => {
       height: 1080,
       type: 'jpg'
     };
-    const result = publicImageJson(image, 10);
-    expect(result.url).toBe(image.url);
+    const result = publicImageJson(image, 10, 'https://img.example.com');
+    expect(result.url).toBe('https://img.example.com/image/images/anime/pc/001.jpg');
     expect(result.gallery).toBe('anime');
     expect(result.total).toBe(10);
   });

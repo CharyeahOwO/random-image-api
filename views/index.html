@@ -68,13 +68,38 @@
 
         <article class="panel api-card">
           <h2>API 调用示例</h2>
+          <p class="muted">以下为不指定图库的全局随机接口；指定图库的调用方式可在左侧图库统计中点击“查看 API”。</p>
           <div class="code-list">
-            <code>/image/api/random</code>
-            <code>/image/api/random?gallery=luotianyi</code>
-            <code>/image/api/random?gallery=luotianyi&amp;device=pc</code>
-            <code>/image/api/random?gallery=luotianyi&amp;device=mobile</code>
-            <code>/image/api/random?gallery=luotianyi&amp;device=pc&amp;type=json</code>
-            <code>/image/api/random?gallery=luotianyi&amp;device=mobile&amp;type=redirect</code>
+            <div class="api-row">
+              <span class="api-label">全局随机</span>
+              <code class="api-url">/image/api/random</code>
+              <button type="button" class="copy-btn" data-copy-path="/image/api/random">复制</button>
+            </div>
+            <div class="api-row">
+              <span class="api-label">电脑随机</span>
+              <code class="api-url">/image/api/random?device=pc</code>
+              <button type="button" class="copy-btn" data-copy-path="/image/api/random?device=pc">复制</button>
+            </div>
+            <div class="api-row">
+              <span class="api-label">手机随机</span>
+              <code class="api-url">/image/api/random?device=mobile</code>
+              <button type="button" class="copy-btn" data-copy-path="/image/api/random?device=mobile">复制</button>
+            </div>
+            <div class="api-row">
+              <span class="api-label">JSON 数据</span>
+              <code class="api-url">/image/api/random?type=json</code>
+              <button type="button" class="copy-btn" data-copy-path="/image/api/random?type=json">复制</button>
+            </div>
+            <div class="api-row">
+              <span class="api-label">图片本体</span>
+              <code class="api-url">/image/api/random?type=image</code>
+              <button type="button" class="copy-btn" data-copy-path="/image/api/random?type=image">复制</button>
+            </div>
+            <div class="api-row">
+              <span class="api-label">显式跳转</span>
+              <code class="api-url">/image/api/random?type=redirect</code>
+              <button type="button" class="copy-btn" data-copy-path="/image/api/random?type=redirect">复制</button>
+            </div>
           </div>
         </article>
       </section>

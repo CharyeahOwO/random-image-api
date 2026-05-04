@@ -18,7 +18,10 @@ function copyText(text, btn) {
 document.addEventListener('click', function(e) {
   var btn = e.target.closest('.copy-btn');
   if (!btn) return;
-  copyText(btn.getAttribute('data-copy'), btn);
+  var text = btn.getAttribute('data-copy');
+  var path = btn.getAttribute('data-copy-path');
+  if (!text && path) text = window.location.origin + path;
+  copyText(text, btn);
 });
 
 var modal = document.getElementById('apiModal');

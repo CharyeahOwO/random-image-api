@@ -136,7 +136,6 @@ export class ImageStore {
           const dimensions = await getImageDimensions(absolutePath);
 
           const image = {
-            url: `${config.publicBaseUrl}${publicImagePath(gallery, device, file.name)}`,
             path: publicImagePath(gallery, device, file.name),
             gallery,
             device,
@@ -288,10 +287,10 @@ export class ImageStore {
   }
 }
 
-export function publicImageJson(image, total) {
+export function publicImageJson(image, total, baseUrl) {
   if (!image) return null;
   return {
-    url: image.url,
+    url: `${baseUrl || config.publicBaseUrl}${image.path}`,
     gallery: image.gallery,
     device: image.device,
     filename: image.filename,

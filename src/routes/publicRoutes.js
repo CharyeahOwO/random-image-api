@@ -16,6 +16,14 @@ function parseLimit(value) {
   return Math.min(parsed, 100);
 }
 
+function requestBaseUrl(req) {
+  const forwardedHost = req.get('x-forwarded-host');
+  const host = forwardedHost ? forwardedHost.split(',')[0].trim() : req.get('host');
+  const forwardedProto = req.get('x-forwarded-proto');
+  const protocol = forwardedProto ? forwardedProto.split(',')[0].trim() : req.protocol;
+  return host ? `${protocol}://${host}` : config.publicBaseUrl;
+}
+
 function galleryRows(galleries) {
   if (galleries.length === 0) {
     return '<tr><td colspan="5">暂无图库，请在后台创建图库或手动放入图片目录。</td></tr>';
@@ -101,7 +109,7 @@ export function createPublicRouter(store) {
     }
 
     if (type === 'json') {
-      return res.json(publicImageJson(image, total));
+      return res.json(publicImageJson(image, total, requestBaseUrl(req)));
     }
     if (type === 'redirect') {
       res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
@@ -142,7 +150,7 @@ export function createPublicRouter(store) {
       res.json({
         total: images.length,
         limit,
-        images: images.map((image) => publicImageJson(image, undefined)).map(({ total, ...rest }) => rest)
+        images: images.map((image) => publicImageJson(image, undefined, requestBaseUrl(req))).map(({ total, ...rest }) => rest)
       });
     } catch (error) {
       next(error);

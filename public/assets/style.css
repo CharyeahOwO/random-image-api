@@ -534,6 +534,15 @@ code {
   display: grid;
 }
 
+.api-card .api-row {
+  grid-template-columns: 86px minmax(0, 1fr) auto;
+}
+
+.api-card .muted {
+  margin-bottom: 12px;
+  line-height: 1.6;
+}
+
 .admin-page {
   background: var(--bg);
 }
