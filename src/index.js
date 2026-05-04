@@ -29,9 +29,11 @@ app.use(
         styleSrc: ["'self'"],
         formAction: ["'self'"],
         baseUri: ["'self'"],
-        objectSrc: ["'none'"]
+        objectSrc: ["'none'"],
+        upgradeInsecureRequests: null
       }
     },
+    strictTransportSecurity: false,
     crossOriginResourcePolicy: false
   })
 );
