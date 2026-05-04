@@ -8,3 +8,8 @@ images
 public/images/**
 !public/images/.gitkeep
 !public/images/**/.gitkeep
+.tmp-uploads/
+.playwright-mcp/
+*.png
+!public/images/**/*.png
+.github
