@@ -83,7 +83,7 @@ export function createPublicRouter(store) {
     noStore(res);
     const gallery = galleryFromPath || req.query.gallery;
     const device = parseDevice(req.query.device, 'all');
-    const type = req.query.type || 'image';
+    const type = req.query.type || 'redirect';
 
     if (gallery && !isValidGalleryName(gallery)) {
       return jsonError(res, 400, '非法图库名');
@@ -104,6 +104,7 @@ export function createPublicRouter(store) {
       return res.json(publicImageJson(image, total));
     }
     if (type === 'redirect') {
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
       return res.redirect(302, image.path);
     }
     return res.sendFile(image.absolutePath, {

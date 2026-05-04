@@ -12,7 +12,7 @@
 ## 功能
 
 - 多图库管理，支持 `pc`（横屏）和 `mobile`（竖屏）分类
-- 随机图 API，支持返回图片本体或 JSON
+- 随机图 API，默认 302 跳转到图片文件，并支持返回图片本体或 JSON
 - 管理后台：上传、预览、筛选、排序、批量删除
 - 上传时校验真实文件头，拒绝危险文件类型
 - Cookie Session、CSRF、Helmet、限流、CORS
@@ -184,13 +184,13 @@ npm start               # 或 npm run dev 热更新
 
 ### `GET /image/api/random`
 
-随机返回一张图片。支持参数组合，灵活适配不同场景。
+随机返回一张图片。默认 302 跳转到真实图片文件，适合 CDN 缓存 `/image/images/...` 下的图片资源；随机入口本身不应被缓存。支持参数组合，灵活适配不同场景。
 
 | 参数 | 可选值 | 默认值 | 说明 |
 |------|--------|--------|------|
 | `gallery` | 图库名 | 全部 | 指定图库 |
 | `device` | `pc` / `mobile` / `all` | `all` | 设备类型 |
-| `type` | `image` / `json` / `redirect` | `image` | 返回格式 |
+| `type` | `image` / `json` / `redirect` | `redirect` | 返回格式 |
 
 **返回格式说明：**
 
@@ -199,6 +199,8 @@ npm start               # 或 npm run dev 热更新
 | `image` | 图片二进制流 | `image/*` |
 | `json` | 图片元数据 JSON | `application/json` |
 | `redirect` | 302 跳转到图片 URL | - |
+
+默认访问 `/image/api/random` 等价于 `/image/api/random?type=redirect`。如需直接返回图片本体，可使用 `?type=image`；如需 JSON，可使用 `?type=json`；如需显式跳转，可使用 `?type=redirect`。
 
 **JSON 响应示例：**
 
@@ -220,11 +222,12 @@ npm start               # 或 npm run dev 热更新
 
 | 接口 | 适用场景 |
 |------|----------|
-| `GET /image/api/random` | 随机返回任意图库的图片，适合全站随机背景 |
+| `GET /image/api/random` | 默认 302 跳转到真实图片文件，适合 CDN 缓存图片路径 |
 | `GET /image/api/random?gallery=anime` | 指定图库随机出图，适合分类壁纸轮播 |
 | `GET /image/api/random?gallery=anime&device=pc` | 指定图库 + 横屏，适合桌面端背景 |
 | `GET /image/api/random?gallery=anime&device=mobile` | 指定图库 + 竖屏，适合手机端背景 |
 | `GET /image/api/random?type=json` | 获取图片元数据，适合前端自行渲染 |
+| `GET /image/api/random?type=image` | 直接返回图片本体，适合不需要 CDN 跳转缓存的场景 |
 | `GET /image/api/random?type=redirect` | 302 跳转，适合 `<img src>` 直接引用 |
 | `GET /image/api/:gallery` | 图库快捷接口，等同于 `?gallery=xxx` |
 | `GET /image/api/galleries` | 获取所有图库统计，适合管理面板展示 |
