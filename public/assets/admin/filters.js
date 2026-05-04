@@ -1,6 +1,6 @@
 import { $, $$, adminHref } from './utils.js';
 
-const imagePageSize = 24;
+const imagePageSize = 15;
 const imageSearchKey = 'nyaovo:imageSearch';
 const imageSortKey = 'nyaovo:imageSort';
 
@@ -12,7 +12,7 @@ export function initFilters({ updateBatchState }) {
   const resetImageFilters = $('#resetImageFilters');
   const loadMoreImages = $('#loadMoreImages');
   const loadMoreStatus = $('#loadMoreStatus');
-  let visibleImageLimit = imagePageSize;
+  const loadMoreRow = $('.load-more-row');
   let filterLoading = false;
   let currentPathSearch = `${window.location.pathname}${window.location.search}`;
   let currentPage = 1;
@@ -70,11 +70,14 @@ export function initFilters({ updateBatchState }) {
 
     if (totalPages <= 1) {
       paginationRow.innerHTML = '';
+      paginationRow.hidden = true;
       return;
     }
 
+    paginationRow.hidden = false;
+
     let html = '';
-    html += `<button data-page="${currentPage - 1}" ${currentPage === 1 ? 'disabled' : ''}>\u25C0</button>`;
+    html += `<button class="page-nav" data-page="${currentPage - 1}" ${currentPage === 1 ? 'disabled' : ''} aria-label="上一页">上一页</button>`;
 
     const maxVisible = 5;
     let start = Math.max(1, currentPage - Math.floor(maxVisible / 2));
@@ -84,20 +87,20 @@ export function initFilters({ updateBatchState }) {
     }
 
     if (start > 1) {
-      html += `<button data-page="1">1</button>`;
-      if (start > 2) html += `<span style="color:var(--muted)">...</span>`;
+      html += '<button class="page-number" data-page="1">1</button>';
+      if (start > 2) html += '<span class="pagination-ellipsis">...</span>';
     }
 
     for (let i = start; i <= end; i++) {
-      html += `<button data-page="${i}" class="${i === currentPage ? 'active' : ''}">${i}</button>`;
+      html += `<button class="page-number ${i === currentPage ? 'active' : ''}" data-page="${i}" ${i === currentPage ? 'aria-current="page"' : ''}>${i}</button>`;
     }
 
     if (end < totalPages) {
-      if (end < totalPages - 1) html += `<span style="color:var(--muted)">...</span>`;
-      html += `<button data-page="${totalPages}">${totalPages}</button>`;
+      if (end < totalPages - 1) html += '<span class="pagination-ellipsis">...</span>';
+      html += `<button class="page-number" data-page="${totalPages}">${totalPages}</button>`;
     }
 
-    html += `<button data-page="${currentPage + 1}" ${currentPage === totalPages ? 'disabled' : ''}>\u25B6</button>`;
+    html += `<button class="page-nav" data-page="${currentPage + 1}" ${currentPage === totalPages ? 'disabled' : ''} aria-label="下一页">下一页</button>`;
 
     paginationRow.innerHTML = html;
 
@@ -106,7 +109,6 @@ export function initFilters({ updateBatchState }) {
         const page = parseInt(btn.dataset.page, 10);
         if (page >= 1 && page <= totalPages) {
           currentPage = page;
-          visibleImageLimit = page * imagePageSize;
           applyImageFilters({ resetPage: false });
           const section = document.getElementById('images');
           if (section) section.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -118,7 +120,6 @@ export function initFilters({ updateBatchState }) {
   function applyImageFilters({ resetPage = true } = {}) {
     if (!imageGrid) return;
     if (resetPage) {
-      visibleImageLimit = imagePageSize;
       currentPage = 1;
     }
 
@@ -133,19 +134,28 @@ export function initFilters({ updateBatchState }) {
       card.dataset.filteredVisible = 'false';
     });
 
-    matched.slice(0, visibleImageLimit).forEach((card) => {
+    const totalPages = Math.max(1, Math.ceil(matched.length / imagePageSize));
+    currentPage = Math.min(currentPage, totalPages);
+    const startIndex = (currentPage - 1) * imagePageSize;
+    const visibleCards = matched.slice(startIndex, startIndex + imagePageSize);
+
+    visibleCards.forEach((card) => {
       card.hidden = false;
       card.dataset.filteredVisible = 'true';
     });
 
     if (imageResultCount) {
-      imageResultCount.textContent = `当前 ${matched.length} 张，已显示 ${Math.min(matched.length, visibleImageLimit)} 张`;
+      if (matched.length) {
+        imageResultCount.textContent = `当前 ${matched.length} 张，第 ${currentPage} / ${totalPages} 页，每页最多 ${imagePageSize} 张`;
+      } else {
+        imageResultCount.textContent = '当前 0 张';
+      }
     }
 
-    const hasMore = matched.length > visibleImageLimit;
-    if (loadMoreImages) loadMoreImages.hidden = !hasMore;
+    if (loadMoreImages) loadMoreImages.hidden = true;
+    if (loadMoreRow) loadMoreRow.hidden = true;
     if (loadMoreStatus) {
-      loadMoreStatus.textContent = hasMore ? `还有 ${matched.length - visibleImageLimit} 张` : matched.length ? '已全部显示' : '无匹配图片';
+      loadMoreStatus.textContent = matched.length ? `本页显示 ${visibleCards.length} 张` : '无匹配图片';
     }
 
     renderPagination(matched.length);
@@ -174,7 +184,6 @@ export function initFilters({ updateBatchState }) {
 
       filters.innerHTML = nextFilters.innerHTML;
       imageGrid.innerHTML = nextGrid.innerHTML;
-      visibleImageLimit = imagePageSize;
       currentPage = 1;
       applyImageFilters();
 
@@ -221,8 +230,7 @@ export function initFilters({ updateBatchState }) {
   });
 
   loadMoreImages?.addEventListener('click', () => {
-    visibleImageLimit += imagePageSize;
-    currentPage = Math.ceil(visibleImageLimit / imagePageSize);
+    currentPage += 1;
     applyImageFilters({ resetPage: false });
   });
 
