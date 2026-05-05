@@ -10,6 +10,7 @@ import { attachAdminPath } from './middleware/auth.js';
 import { csrfProtection } from './middleware/csrf.js';
 import { createPublicRouter } from './routes/publicRoutes.js';
 import { createAdminRouter } from './routes/adminRoutes.js';
+import { imageApiMiddleware, staticImageHeaders } from './utils/response.js';
 
 const app = express();
 const store = new ImageStore();
@@ -38,6 +39,8 @@ app.use(
   })
 );
 
+app.use(`${appBasePath}/api`, imageApiMiddleware);
+
 app.use(
   cors({
     origin: config.corsOrigin === '*' ? '*' : config.corsOrigin.split(',').map((item) => item.trim()),
@@ -60,9 +63,7 @@ app.use(
   express.static(config.imageRoot, {
     index: false,
     dotfiles: 'ignore',
-    setHeaders(res) {
-      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
-    }
+    setHeaders: staticImageHeaders
   })
 );
 

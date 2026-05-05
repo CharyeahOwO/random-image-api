@@ -1,7 +1,7 @@
 import express from 'express';
 import { config, deviceNames } from '../config.js';
 import { publicImageJson } from '../imageStore.js';
-import { jsonError, noStore, renderView, escapeHtml } from '../utils/response.js';
+import { absoluteUrl, imageApiMiddleware, jsonError, renderView, escapeHtml, requestBaseUrl } from '../utils/response.js';
 import { isValidDevice, isValidGalleryName } from '../utils/file.js';
 
 function parseDevice(value, fallback = 'all') {
@@ -14,14 +14,6 @@ function parseLimit(value) {
   const parsed = Number.parseInt(value, 10);
   if (!Number.isFinite(parsed) || parsed < 1) return 100;
   return Math.min(parsed, 100);
-}
-
-function requestBaseUrl(req) {
-  const forwardedHost = req.get('x-forwarded-host');
-  const host = forwardedHost ? forwardedHost.split(',')[0].trim() : req.get('host');
-  const forwardedProto = req.get('x-forwarded-proto');
-  const protocol = forwardedProto ? forwardedProto.split(',')[0].trim() : req.protocol;
-  return host ? `${protocol}://${host}` : config.publicBaseUrl;
 }
 
 function galleryRows(galleries) {
@@ -50,6 +42,8 @@ function galleryRows(galleries) {
 
 export function createPublicRouter(store) {
   const router = express.Router();
+
+  router.use('/api', imageApiMiddleware);
 
   router.get('/', async (req, res, next) => {
     try {
@@ -88,7 +82,6 @@ export function createPublicRouter(store) {
   });
 
   async function randomHandler(req, res, galleryFromPath) {
-    noStore(res);
     const gallery = galleryFromPath || req.query.gallery;
     const device = parseDevice(req.query.device, 'all');
     const type = req.query.type || 'redirect';
@@ -112,14 +105,9 @@ export function createPublicRouter(store) {
       return res.json(publicImageJson(image, total, requestBaseUrl(req)));
     }
     if (type === 'redirect') {
-      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
-      return res.redirect(302, image.path);
+      return res.redirect(302, absoluteUrl(req, image.path));
     }
-    return res.sendFile(image.absolutePath, {
-      headers: {
-        'Cache-Control': 'no-store'
-      }
-    });
+    return res.sendFile(image.absolutePath);
   }
 
   router.get('/api/random', (req, res, next) => {
