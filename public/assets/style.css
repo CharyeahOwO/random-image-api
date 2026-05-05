@@ -699,6 +699,11 @@ code {
   padding: 16px;
 }
 
+.gallery-copy-button {
+  width: 100%;
+  margin-top: 8px;
+}
+
 .header-stats .stat-card {
   min-height: 72px;
   padding: 12px 14px;
@@ -2510,7 +2515,6 @@ input[type="file"] {
   }
 
   .api-links {
-    flex-direction: column;
     gap: 8px;
   }
 

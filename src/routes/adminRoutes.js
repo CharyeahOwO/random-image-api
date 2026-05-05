@@ -59,13 +59,20 @@ function targetGalleryOptions(galleries) {
     .join('');
 }
 
-function galleryCards(galleries, csrfToken, adminPath) {
+function galleryCards(galleries, images, csrfToken, adminPath) {
   if (galleries.length === 0) {
     return '<div class="empty-state">还没有图库。</div>';
   }
   return galleries
     .map((gallery) => {
       const displayName = getGalleryDisplayName(gallery);
+      const galleryPaths = images
+        .filter((image) => image.gallery === gallery.name)
+        .map((image) => image.path)
+        .join('\n');
+      const copyButton = gallery.total
+        ? `<button type="button" class="copy-button gallery-copy-button" data-copy-paths="${escapeHtml(galleryPaths)}">复制全部真实 URL</button>`
+        : '';
       const deleteButton =
         gallery.total === 0
           ? `<form method="post" action="${adminPath}/galleries/delete" class="inline-form confirm-form" data-confirm="确定删除空图库 ${escapeHtml(displayName)} 吗？">
@@ -80,6 +87,7 @@ function galleryCards(galleries, csrfToken, adminPath) {
         ${labelHtml}
         <p><strong>${gallery.total}</strong> 张图片</p>
         <p>PC：${gallery.pc} / Mobile：${gallery.mobile}</p>
+        ${copyButton}
         ${deleteButton}
       </article>`;
     })
@@ -110,7 +118,7 @@ function imageCards(images, csrfToken, adminPath) {
   if (images.length === 0) return '<div class="empty-state">当前筛选下没有图片。</div>';
   return images
     .map((image) => {
-      const url = `${config.publicBaseUrl}${publicImagePath(image.gallery, image.device, image.filename)}`;
+      const imagePath = publicImagePath(image.gallery, image.device, image.filename);
       const payload = escapeHtml(JSON.stringify({ gallery: image.gallery, device: image.device, filename: image.filename }));
       return `<article class="image-card image-card-${escapeHtml(image.device)}"
         data-filename="${escapeHtml(image.filename.toLowerCase())}"
@@ -129,7 +137,7 @@ function imageCards(images, csrfToken, adminPath) {
           <span>${formatBytes(image.size)}</span>
         </div>
         <div class="card-actions">
-          <button type="button" class="copy-button" data-copy="${escapeHtml(url)}">复制 URL</button>
+          <button type="button" class="copy-button" data-copy-path="${escapeHtml(imagePath)}">复制 URL</button>
           <form method="post" action="${adminPath}/images/delete" class="confirm-form" data-confirm="确定删除 ${escapeHtml(image.filename)} 吗？">
             <input type="hidden" name="_csrf" value="${csrfToken}">
             <input type="hidden" name="gallery" value="${escapeHtml(image.gallery)}">
@@ -240,20 +248,6 @@ function sendUploadResult(req, res, status = 200) {
   return res.redirect(config.adminPath);
 }
 
-function apiExamples(adminPath) {
-  const examples = [
-    '/image/api/random',
-    '/image/api/random?gallery=luotianyi',
-    '/image/api/random?gallery=luotianyi&device=pc',
-    '/image/api/random?gallery=luotianyi&device=mobile&type=json',
-    '/image/api/galleries',
-    '/image/api/list?limit=100'
-  ];
-  return examples
-    .map((example) => `<a href="${escapeHtml(example)}" target="_blank" rel="noreferrer">${escapeHtml(example)}</a>`)
-    .join('');
-}
-
 export function createAdminRouter(store) {
   const router = express.Router();
 
@@ -311,12 +305,11 @@ export function createAdminRouter(store) {
         galleryCount: stats.galleryCount,
         galleryOptions: galleryOptions(stats.galleries, currentGallery),
         targetGalleryOptions: targetGalleryOptions(stats.galleries),
-        galleryCards: galleryCards(stats.galleries, csrfToken, config.adminPath),
+        galleryCards: galleryCards(stats.galleries, stats.images, csrfToken, config.adminPath),
         recentImages: recentImages(stats.images),
         imageCards: imageCards(filtered, csrfToken, config.adminPath),
         batchToolbar: batchToolbar(stats.galleries, csrfToken, config.adminPath),
         filterLinks: filterLinks(stats.galleries, currentGallery, currentDevice, config.adminPath),
-        apiExamples: apiExamples(config.adminPath),
         maxFileSizeMb: config.maxFileSizeMb,
         maxUploadFiles: config.maxUploadFiles
       });
