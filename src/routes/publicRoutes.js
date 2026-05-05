@@ -10,6 +10,15 @@ function parseDevice(value, fallback = 'all') {
   return null;
 }
 
+function parseRandomQuery(query) {
+  const type = ['image', 'json', 'redirect'].includes(query.type) ? query.type : 'redirect';
+  const deviceValue = query.device || (deviceNames.includes(query.type) ? query.type : undefined);
+  return {
+    device: parseDevice(deviceValue, 'all'),
+    type
+  };
+}
+
 function parseLimit(value) {
   const parsed = Number.parseInt(value, 10);
   if (!Number.isFinite(parsed) || parsed < 1) return 100;
@@ -83,8 +92,7 @@ export function createPublicRouter(store) {
 
   async function randomHandler(req, res, galleryFromPath) {
     const gallery = galleryFromPath || req.query.gallery;
-    const device = parseDevice(req.query.device, 'all');
-    const type = req.query.type || 'redirect';
+    const { device, type } = parseRandomQuery(req.query);
 
     if (gallery && !isValidGalleryName(gallery)) {
       return jsonError(res, 400, '非法图库名');
@@ -92,10 +100,6 @@ export function createPublicRouter(store) {
     if (!device) {
       return jsonError(res, 400, 'device 只能是 pc、mobile 或 all');
     }
-    if (!['image', 'json', 'redirect'].includes(type)) {
-      return jsonError(res, 400, 'type 只能是 image、json 或 redirect');
-    }
-
     const { image, total } = await store.randomImage({ gallery, device });
     if (!image) {
       return jsonError(res, 404, '没有可用图片', { total: 0 });
