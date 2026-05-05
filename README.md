@@ -34,8 +34,6 @@
 
 镜像地址：`docker.io/charyeahowo/nyaovo-random-image-api:latest`
 
-每次 push 到 `main` 分支会通过 GitHub Actions 自动构建并推送。
-
 <details>
 <summary><b>docker compose 部署（点击展开）</b></summary>
 
