@@ -109,7 +109,7 @@ cp .env.example .env
 docker compose up -d --build
 ```
 
-如需使用本地构建而非远程镜像，将 `docker-compose.yml` 中的 `image` 行替换为：
+如需使用本地构建而非远程镜像，请将 `docker-compose.yml` 中的 `image` 行替换为：
 
 ```yaml
 build:
